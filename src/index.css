@@ -67,12 +67,16 @@ p.subtitle {
 /* CapsLock Header Strip */
 .top-header {
   background-color: var(--header-bg);
-  padding: 1rem 2rem;
+  padding: 1rem max(2rem, calc(50vw - 600px + 2rem)); /* Keep inner content aligned, with minimum 2rem padding */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: -2rem -2rem 3rem -2rem;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-top: -2rem;
+  margin-bottom: 3rem;
   color: var(--text-dark);
+  border-bottom: 4px solid var(--brand-green);
 }
 
 .top-header .logo-container {

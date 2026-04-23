@@ -46,22 +46,22 @@ const App: React.FC = () => {
     setError(null);
     const pipelineStart = performance.now();
     logger.info('Pipeline started: file upload received');
-    
+
     try {
       // 1. Parse CSV
       const rows = CSVParser.parse(csvText);
-      
+
       // 2. Aggregate Data
       setProgress('aggregating');
       logger.info('Aggregation started');
       const comparison = WoWAggregator.aggregate(rows);
       const changes = WoWAggregator.findSignificantChanges(rows);
       logger.success('Aggregation complete', { significantChanges: changes.length });
-      
+
       // 3. Generate Brief
       setProgress('generating');
       const generatedBrief = await BriefGenerator.generate(comparison, changes);
-      
+
       const totalMs = Math.round(performance.now() - pipelineStart);
       logger.success('Pipeline complete', { totalRows: rows.length }, totalMs);
       setProgress('complete');
@@ -138,24 +138,26 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ fontSize: '0.9rem', cursor: 'pointer' }}>CONTACT US &rarr;</div>
+        <a href="https://www.bunkens.be/en/contact" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-dark)', textDecoration: 'none', fontWeight: 600 }}>
+          CONTACT FILIP &rarr;
+        </a>
       </header>
 
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h1>Services</h1>
-        <p className="subtitle">Taking your business to the next level</p>
+        <h1>Performance Brief</h1>
+        <p className="subtitle">Autonomous AI-powered marketing analysis</p>
       </div>
 
       <main>
         {!brief ? (
           <div className="glass-card animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <UploadZone onUpload={handleUpload} isLoading={progress !== 'idle' && progress !== 'complete'} />
-            
+
             {progress !== 'idle' && (
               <div className="progress-container">
                 <div className="progress-bar-bg">
-                  <div 
-                    className="progress-bar-fill" 
+                  <div
+                    className="progress-bar-fill"
                     style={{ width: `${getProgressPercentage()}%` }}
                   />
                 </div>
