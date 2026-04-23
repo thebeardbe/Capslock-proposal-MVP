@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 export class BriefGenerator {
   private static API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  private static ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  private static ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent';
 
   static async generate(comparison: WoWComparison, changes: SignificantChange[]): Promise<WeeklyBrief> {
     const start = performance.now();
@@ -11,7 +11,7 @@ export class BriefGenerator {
     
     if (this.API_KEY) {
       try {
-        logger.info('Gemini API call started', { model: 'gemini-1.5-flash' });
+        logger.info('Gemini API call started', { model: 'gemini-3.1-flash-lite-preview' });
         summary = await this.fetchGeminiSummary(comparison, changes);
         logger.success('Gemini API call completed');
       } catch (e) {
@@ -60,6 +60,15 @@ export class BriefGenerator {
     });
 
     const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || `API Error: ${response.status} ${response.statusText}`);
+    }
+    
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error('API returned an empty response or unexpected format.');
+    }
+
     return data.candidates[0].content.parts[0].text;
   }
 
