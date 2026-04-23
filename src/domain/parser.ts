@@ -1,4 +1,5 @@
 import { CampaignRow } from './types';
+import { logger } from './logger';
 
 export class CSVParser {
   /**
@@ -6,8 +7,14 @@ export class CSVParser {
    * Handles basic CSV structure with headers.
    */
   static parse(csvText: string): CampaignRow[] {
+    const start = performance.now();
+    logger.info('CSV parse started');
+
     const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
-    if (lines.length < 2) throw new Error('CSV file is empty or missing data.');
+    if (lines.length < 2) {
+      logger.error('CSV parse failed', { reason: 'empty or missing data' });
+      throw new Error('CSV file is empty or missing data.');
+    }
 
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     
@@ -16,6 +23,7 @@ export class CSVParser {
     const missing = required.filter(r => !headers.includes(r));
     
     if (missing.length > 0) {
+      logger.error('CSV validation failed', { missingColumns: missing.join(', ') });
       throw new Error(`Missing required columns: ${missing.join(', ')}`);
     }
 
@@ -35,9 +43,13 @@ export class CSVParser {
           conversions: parseFloat(values[headerMap['conversions']]) || 0,
         };
       } catch (e) {
-        console.error(`Error parsing row ${index + 1}:`, e);
+        logger.error('Row parse error', { row: index + 1 });
         throw new Error(`Error parsing row ${index + 1}. Ensure all numeric fields are valid.`);
       }
     });
+
+    const durationMs = Math.round(performance.now() - start);
+    logger.success('CSV parsed successfully', { rowCount: rows.length, columnCount: headers.length }, durationMs);
+    return rows;
   }
 }

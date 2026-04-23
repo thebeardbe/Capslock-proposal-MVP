@@ -1,24 +1,31 @@
 import { WoWComparison, SignificantChange, WeeklyBrief } from './types';
+import { logger } from './logger';
 
 export class BriefGenerator {
   private static API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
   private static ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   static async generate(comparison: WoWComparison, changes: SignificantChange[]): Promise<WeeklyBrief> {
+    const start = performance.now();
     let summary = '';
     
     if (this.API_KEY) {
       try {
+        logger.info('Gemini API call started', { model: 'gemini-1.5-flash' });
         summary = await this.fetchGeminiSummary(comparison, changes);
+        logger.success('Gemini API call completed');
       } catch (e) {
-        console.error('Gemini API failed, falling back to template:', e);
+        logger.error('Gemini API failed, falling back to template', { error: String(e) });
         summary = this.generateTemplateSummary(comparison, changes);
       }
     } else {
+      logger.warn('No Gemini API key found, using template generator');
       summary = this.generateTemplateSummary(comparison, changes);
     }
 
     const recommendations = this.generateRecommendations(comparison, changes);
+    const durationMs = Math.round(performance.now() - start);
+    logger.success('Brief generation complete', { significantChanges: changes.length, recommendations: recommendations.length }, durationMs);
 
     return {
       overallWoW: comparison,

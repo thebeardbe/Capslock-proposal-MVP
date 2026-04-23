@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { UploadZone } from './components/UploadZone';
 import { BriefDashboard } from './components/BriefDashboard';
+import { LogViewer } from './components/LogViewer';
 import { CSVParser } from './domain/parser';
 import { WoWAggregator } from './domain/aggregator';
 import { BriefGenerator } from './domain/briefGenerator';
 import { WeeklyBrief } from './domain/types';
+import { logger } from './domain/logger';
 import './index.css';
 
 const App: React.FC = () => {
@@ -15,21 +17,27 @@ const App: React.FC = () => {
   const handleUpload = async (csvText: string) => {
     setIsLoading(true);
     setError(null);
+    const pipelineStart = performance.now();
+    logger.info('Pipeline started: file upload received');
     
     try {
       // 1. Parse CSV
       const rows = CSVParser.parse(csvText);
       
       // 2. Aggregate Data
+      logger.info('Aggregation started');
       const comparison = WoWAggregator.aggregate(rows);
       const changes = WoWAggregator.findSignificantChanges(rows);
+      logger.success('Aggregation complete', { significantChanges: changes.length });
       
       // 3. Generate Brief
       const generatedBrief = await BriefGenerator.generate(comparison, changes);
       
+      const totalMs = Math.round(performance.now() - pipelineStart);
+      logger.success('Pipeline complete', { totalRows: rows.length }, totalMs);
       setBrief(generatedBrief);
     } catch (err: any) {
-      console.error(err);
+      logger.error('Pipeline failed', { error: err.message || 'Unknown error' });
       setError(err.message || 'An error occurred while processing the file.');
     } finally {
       setIsLoading(false);
@@ -40,6 +48,17 @@ const App: React.FC = () => {
     setBrief(null);
     setError(null);
   };
+
+  // Simple path-based routing (no library needed)
+  const isLogPage = window.location.pathname === '/filip';
+
+  if (isLogPage) {
+    return (
+      <div className="app-container">
+        <LogViewer />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
