@@ -1,0 +1,23 @@
+# Sample Docker Compose file for local development
+# Use this for a standalone installation without external proxy networks
+
+services:
+  weekly-brief:
+    build: .
+    container_name: weekly-brief-standalone
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5173:5173" # Vite Dev Server
+      - "3001:3001" # Log Server API
+    environment:
+      - VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
+      - ALLOWED_HOST=localhost
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - ./logs:/app/logs
+    # Starts both the diagnostic log server and the Vite frontend
+    command: sh -c "npm install && node server/logServer.js & npm run dev -- --host"
+
+# No external networks required for standalone local use
